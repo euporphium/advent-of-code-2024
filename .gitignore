@@ -6,3 +6,6 @@ riderModule.iml
 
 # JetBrains Rider
 .idea/
+
+# Advent of Code
+data/**/actual.txt
