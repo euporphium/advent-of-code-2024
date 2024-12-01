@@ -16,4 +16,10 @@
         <NoWarn>$(NoWarn);NU1903</NoWarn>
     </PropertyGroup>
 
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
 </Project>
