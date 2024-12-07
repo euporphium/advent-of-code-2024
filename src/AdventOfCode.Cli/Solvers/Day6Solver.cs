@@ -22,7 +22,7 @@ public class Day6Solver : ISolver
 internal class GuardTracker
 {
     private readonly char[][] _grid;
-    private readonly List<Coordinate> _obstacles = [];
+    private readonly bool[,] _obstacles;
     private readonly HashSet<Coordinate> _explored = [];
     private Guard _guard;
     
@@ -33,6 +33,7 @@ internal class GuardTracker
     {
         var rows = input.Length;
         var cols = input[0].Length;
+        _obstacles = new bool[rows, cols];
 
         _grid = new char[rows][];
         for (var i = 0; i < rows; i++)
@@ -50,7 +51,7 @@ internal class GuardTracker
                         _empty.Add(coordinate);
                         break;
                     case '#':
-                        _obstacles.Add(coordinate);
+                        _obstacles[i, j] = true;
                         break;
                     case '^':
                         SetGuard(coordinate, Direction.Up);
@@ -90,7 +91,7 @@ internal class GuardTracker
         var next = GetNext();
         while (next != null)
         {
-            if (_obstacles.Contains(next) || next == _shenanigan)
+            if (_obstacles[next.X, next.Y] || next == _shenanigan)
             {
                 SetGuard(_guard.Position, TurnRight(_guard.Orientation));
             }
@@ -111,7 +112,7 @@ internal class GuardTracker
         var next = GetNext();
         while (next != null)
         {
-            if (_obstacles.Contains(next))
+            if (_obstacles[next.X, next.Y])
             {
                 SetGuard(_guard.Position, TurnRight(_guard.Orientation));
             }
@@ -151,7 +152,7 @@ internal class GuardTracker
                 return true;
             }
             
-            if (_obstacles.Contains(next) || next == _shenanigan)
+            if (_obstacles[next.X, next.Y] || next == _shenanigan)
             {
                 encountered.Add(_guard);
                 SetGuard(_guard.Position, TurnRight(_guard.Orientation));
@@ -186,7 +187,7 @@ internal class GuardTracker
                         _ => throw new InvalidOperationException("Invalid guard orientation")
                     });
                 }
-                else if (_obstacles.Contains(coordinate))
+                else if ((_obstacles[coordinate.X, coordinate.Y]))
                 {
                     Console.Write('#');
                 }
