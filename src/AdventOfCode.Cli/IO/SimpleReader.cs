@@ -9,4 +9,10 @@ internal class SimpleReader(IOptions<ApplicationOptions> options)
         var path = Path.Join(options.Value.InputDataDirectory, day.ToString(), input);
         return await File.ReadAllLinesAsync(path);
     }
+    
+    public int GetLatestDay()
+    {
+        var directory = new DirectoryInfo(options.Value.InputDataDirectory);
+        return directory.GetDirectories().Select(d => int.Parse(d.Name)).Max();
+    }
 }

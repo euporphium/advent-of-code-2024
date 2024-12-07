@@ -123,7 +123,8 @@ internal class GuardTracker
                 SetGuard(_guard.Position, TurnRight(_guard.Orientation));
                 if (HasLoop())
                 {
-                    Console.WriteLine($"Loop found. Total: {++sum}");
+                    sum++;
+                    // Console.WriteLine($"Loop found. Total: {++sum}");
                 }
                 
                 // explore without shenanigan
