@@ -13,7 +13,7 @@ public class Day6Solver : ISolver
     public string SolvePartB(string[] input)
     {
         var tracker = new GuardTracker(input);
-        var count = tracker.FindLoopCreatingObstaclePositions();
+        var count = tracker.FindLoopCreatingObstacleOptions();
         
         return count.ToString();
     }
@@ -105,24 +105,34 @@ internal class GuardTracker
         return _explored.Count;
     }
 
-    public int FindLoopCreatingObstaclePositions()
+    public int FindLoopCreatingObstacleOptions()
     {
-        var startingGuard = _guard;
-        
-        Patrol();
-        var originalPath = _explored.ToHashSet();
-        
         var sum = 0;
-        foreach (var coordinate in originalPath)
+        var next = GetNext();
+        while (next != null)
         {
-            _shenanigan = coordinate;
-            if (HasLoop())
+            if (_obstacles.Contains(next))
             {
-                Console.WriteLine($"Loop found. Total: {++sum}");
+                SetGuard(_guard.Position, TurnRight(_guard.Orientation));
+            }
+            else
+            {
+                // explore with shenanigan
+                var guard = _guard;
+                _shenanigan = next;
+                SetGuard(_guard.Position, TurnRight(_guard.Orientation));
+                if (HasLoop())
+                {
+                    Console.WriteLine($"Loop found. Total: {++sum}");
+                }
+                
+                // explore without shenanigan
+                _guard = guard;
+                _shenanigan = null;
+                SetGuard(next, _guard.Orientation);
             }
 
-            _explored.Clear();
-            _guard = startingGuard;
+            next = GetNext();
         }
 
         return sum;
