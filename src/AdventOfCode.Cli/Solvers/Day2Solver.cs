@@ -16,7 +16,7 @@ public class Day2Solver : ISolver
     public string SolvePartB(string[] input)
     {
         var safeCount = input.Select(line => line.Split(' ').Select(int.Parse).ToList())
-            .Count(IsSafeWithDampener);
+            .Count(levels => IsSafeWithDampener(levels));
 
         return safeCount.ToString();
     }
@@ -46,42 +46,14 @@ public class Day2Solver : ISolver
         return true;
     }
 
-    private static bool IsSafeWithDampener(List<int> levels)
+    private static bool IsSafeWithDampener(List<int> levels, int index = 0)
     {
         // if removing a single level from an unsafe report would make it safe, the report instead counts as safe
-        bool dampenerUsed = false;
-        bool? increasing = null;
-        for (var i = 1; i < levels.Count; i++)
-        {
-            var diff = levels[i] - levels[i - 1];
-            
-            var absDiff = Math.Abs(diff);
-            if (absDiff is < 1 or > 3)
-            {
-                if (dampenerUsed) return false;
-                dampenerUsed = true;
-            }
+        if (index >= levels.Count) return false;
+        
+        var copy = new List<int>(levels);
+        copy.RemoveAt(index);
 
-            if (diff > 0)
-            {
-                increasing ??= true;
-                if (!increasing.Value)
-                {
-                    if (dampenerUsed) return false;
-                    dampenerUsed = true;
-                }
-            }
-            else
-            {
-                increasing ??= false;
-                if (increasing.Value)
-                {
-                    if (dampenerUsed) return false;
-                    dampenerUsed = true;
-                }
-            }
-        }
-
-        return true;
+        return IsSafe(copy) || IsSafeWithDampener(levels, index + 1);
     }
 }
