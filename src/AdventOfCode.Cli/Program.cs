@@ -33,26 +33,27 @@ app.AddCommand("solve",
         return Task.CompletedTask;
     });
 
-app.AddCommand("report", async (IEnumerable<ISolver> solvers, SimpleReader reader) =>
+app.AddCommand("report", async (IEnumerable<ISolver> solvers, SimpleReader reader, int? day) =>
 {
-    var latestDay = reader.GetLatestDay();
+    var firstReportDay = day ?? 1;
+    var lastReportDay = day ?? reader.GetLatestDay();
 
     solvers = solvers.ToList();
     var reports = new List<DayReport>();
-    for (var day = 1; day <= latestDay; day++)
+    for (var i = firstReportDay; i <= lastReportDay; i++)
     {
-        Console.WriteLine($"Generating report for Day {day}");
+        Console.WriteLine($"Generating report for Day {i}");
 
         var (lines, _) = await Performance.LogTimeAsync("Read input file",
-            async () => await reader.GetInputLinesAsync(day, "actual.txt"));
-        var solver = solvers.FirstOrDefault(s => s.GetType().Name == $"Day{day}Solver");
-        Debug.Assert(solver != null, $"Solver for day {day} not found");
+            async () => await reader.GetInputLinesAsync(i, "actual.txt"));
+        var solver = solvers.FirstOrDefault(s => s.GetType().Name == $"Day{i}Solver");
+        Debug.Assert(solver != null, $"Solver for day {i} not found");
 
         var (resultA, elapsedMillisecondsA) = Performance.LogTime("Solve Part A", () => solver.SolvePartA(lines));
-        reports.Add(new DayReport(day, "a", resultA, elapsedMillisecondsA));
+        reports.Add(new DayReport(i, "a", resultA, elapsedMillisecondsA));
 
         var (resultB, elapsedMillisecondsB) = Performance.LogTime("Solve Part B", () => solver.SolvePartB(lines));
-        reports.Add(new DayReport(day, "b", resultB, elapsedMillisecondsB));
+        reports.Add(new DayReport(i, "b", resultB, elapsedMillisecondsB));
     }
 
     Console.Clear();
