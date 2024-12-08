@@ -10,6 +10,9 @@ public class Day7Solver : ISolver
         ["*"] = new Operation((a, b) => a * b),
         ["||"] = new Operation((a, b) => long.Parse($"{a}{b}"))
     };
+    
+    // Cache of operator combinations based on length needed and operation count allowed
+    private static readonly Dictionary<(int length, int opCount), Operation[][]> CombinationCache = new();
 
     public string SolvePartA(string[] input) =>
         Solve(input, [Operations["+"], Operations["*"]]);
@@ -17,10 +20,12 @@ public class Day7Solver : ISolver
     public string SolvePartB(string[] input) =>
         Solve(input, [Operations["+"], Operations["*"], Operations["||"]]);
 
-    private static string Solve(string[] input, Operation[] allowedOperations) =>
-        input.Where(line => EvaluatesToTargetValue(line, allowedOperations))
+    private static string Solve(string[] input, Operation[] allowedOperations)
+    {
+        return input.Where(line => EvaluatesToTargetValue(line, allowedOperations))
             .Sum(line => long.Parse(line.Split(':')[0]))
             .ToString();
+    }
 
     private static bool EvaluatesToTargetValue(string line, Operation[] allowedOperations)
     {
@@ -39,15 +44,19 @@ public class Day7Solver : ISolver
             parts[1].Trim().Split(' ').Select(long.Parse).ToList()
         );
     }
-    
-    private static List<T[]> GenerateOperatorCombinations<T>(T[] options, int length)
+
+    private static Operation[][] GenerateOperatorCombinations(Operation[] options, int length)
     {
-        var total = (int)Math.Pow(options.Length, length);
-        var combinations = new List<T[]>(total);
+        var key = (length, options.Length);
+        if (CombinationCache.TryGetValue(key, out var cached)) 
+            return cached;
         
+        var total = (int)Math.Pow(options.Length, length);
+        var combinations = new Operation[total][];
+
         for (var i = 0; i < total; i++)
         {
-            var combination = new T[length];
+            var combination = new Operation[length];
             var temp = i;
             for (var j = 0; j < length; j++)
             {
@@ -55,8 +64,10 @@ public class Day7Solver : ISolver
                 temp /= options.Length;
             }
 
-            combinations.Add(combination);
+            combinations[i] = combination;
         }
+        
+        CombinationCache[key] = combinations;
 
         return combinations;
     }
