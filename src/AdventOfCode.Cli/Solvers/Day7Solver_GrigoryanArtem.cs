@@ -7,9 +7,7 @@ namespace AdventOfCode.Cli.Solvers;
 public class Day7Solver_GrigoryanArtem : ISolver
 {
     private const int NumberOfTasks = 128;
-
     private delegate bool Operation(ulong a, ulong b, out ulong result);
-
     private ulong[] _answers = [];
     private ulong[][] _input = [];
 
@@ -17,13 +15,12 @@ public class Day7Solver_GrigoryanArtem : ISolver
     {
         _answers = new ulong[lines.Length];
         _input = new ulong[lines.Length][];
-
         foreach (var (line, idx) in lines.Select((value, i) => (value, i)))
         {
-            var parts = line.Split(':');
-            _answers[idx] = ulong.Parse(parts[0].Trim());
-            _input[idx] = parts[1].Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                .Select(s => ulong.Parse(s.Trim()))
+            var col = line.IndexOf(':');
+            _answers[idx] = Convert.ToUInt64(line[..col]);
+            _input[idx] = line[(col + 1)..].Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => Convert.ToUInt64(s.Trim()))
                 .ToArray();
         }
     }
@@ -31,13 +28,13 @@ public class Day7Solver_GrigoryanArtem : ISolver
     public string SolvePartA(string[] input)
     {
         Init(input);
-        return CalculateSum([Mul, Add]).ToString();
+        return CalculateSum([Div, Sub]).ToString();
     }
 
     public string SolvePartB(string[] input)
     {
         Init(input);
-        return CalculateSum([Mul, Add, Concat]).ToString();
+        return CalculateSum([Split, Div, Sub]).ToString();
     }
 
     private ulong CalculateSum(Operation[] operations)
@@ -47,7 +44,7 @@ public class Day7Solver_GrigoryanArtem : ISolver
             .Select(i => CalculateSumAsync(operations, i * chunkSize, chunkSize))
             .ToArray();
         Task.WaitAll(tasks);
-        return tasks.Aggregate(0UL, (acc, t) => acc + t.Result);
+        return tasks.Aggregate(0UL, (acc, t) => acc += t.Result);
     }
 
     private Task<ulong> CalculateSumAsync(Operation[] operations, int start, int count)
@@ -58,60 +55,47 @@ public class Day7Solver_GrigoryanArtem : ISolver
         var end = Math.Min(start + count, _input.Length);
         var sum = 0UL;
         for (int i = start; i < end; i++)
-            if (ForwardFind(_input[i], operations, _answers[i]))
+            if (BackFind(_input[i], operations, _answers[i]))
                 sum += _answers[i];
         return sum;
     }
 
-    private static bool ForwardFind(ulong[] arr, Operation[] operations, ulong target)
+    private static bool BackFind(ulong[] arr, Operation[] operations, ulong result)
     {
-        if (arr.Length == 1) return arr[0] == target;
-
-        var stack = new Stack<(int index, ulong value)>();
-        stack.Push((1, arr[0]));
-
+        var stack = new Stack<(int index, ulong acc)>();
+        stack.Push((arr.Length - 1, result));
         while (stack.Count > 0)
         {
-            var (index, currentValue) = stack.Pop();
-
-            if (index == arr.Length)
+            var (index, acc) = stack.Pop();
+            if (index == 0)
             {
-                if (currentValue == target)
+                if (acc == arr[0])
                     return true;
                 continue;
             }
-
-            foreach (var op in operations)
-            {
-                if (op(currentValue, arr[index], out var result))
-                {
-                    if (result <= target) // Optimization: don't continue if we've exceeded target
-                        stack.Push((index + 1, result));
-                }
-            }
+            for (int i = 0; i < operations.Length; i++)
+                if (operations[i](acc, arr[index], out var value))
+                    stack.Push((index - 1, value));
         }
-
         return false;
     }
 
-    private static bool Add(ulong a, ulong b, out ulong result)
+    private static bool Div(ulong a, ulong b, out ulong result)
     {
-        result = a + b;
-        return true;
+        result = a / b;
+        return a % b == 0;
     }
 
-    private static bool Mul(ulong a, ulong b, out ulong result)
+    private static bool Sub(ulong a, ulong b, out ulong result)
     {
-        result = a * b;
-        return true;
+        result = a - b;
+        return result > 0;
     }
 
-    private static bool Concat(ulong a, ulong b, out ulong result)
+    private static bool Split(ulong a, ulong b, out ulong result)
     {
-        // Calculate how many digits b has
-        var digits = (ulong)Math.Floor(Math.Log10(b) + 1);
-        var multiplier = (ulong)Math.Pow(10, digits);
-        result = a * multiplier + b;
-        return true;
+        var div = (ulong)Math.Pow(10, (ulong)Math.Log10(b) + 1UL);
+        result = a / div;
+        return a % div == b;
     }
 }
