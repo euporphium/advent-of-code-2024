@@ -84,7 +84,7 @@ public class EasterBunnyAntennaGrid : Grid
             }
         }
 
-        Console.WriteLine(this);
+        // Console.WriteLine(this);
         return antinodeCount;
     }
     

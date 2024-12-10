@@ -4,239 +4,167 @@ public class Day6Solver : ISolver
 {
     public string SolvePartA(string[] input)
     {
-        var tracker = new GuardTracker(input);
-        var explored = tracker.Patrol();
-
-        return explored.ToString();
+        var patrol = new GuardPatrol(input);
+        var count = patrol.CountVisitedTiles();
+        return count.ToString();
     }
 
     public string SolvePartB(string[] input)
     {
-        var tracker = new GuardTracker(input);
-        var count = tracker.FindLoopCreatingObstacleOptions();
-        
+        var patrol = new GuardPatrol(input);
+        var count = patrol.CountPossibleLoopPositions();
         return count.ToString();
     }
 }
 
-internal class GuardTracker
+public class GuardPatrol
 {
-    private readonly char[][] _grid;
-    private readonly bool[,] _obstacles;
-    private readonly HashSet<Coordinate> _explored = [];
-    private Guard _guard;
-    
-    private readonly HashSet<Coordinate> _empty = [];
-    private Coordinate? _shenanigan;
-
-    public GuardTracker(string[] input)
-    {
-        var rows = input.Length;
-        var cols = input[0].Length;
-        _obstacles = new bool[rows, cols];
-
-        _grid = new char[rows][];
-        for (var i = 0; i < rows; i++)
-        {
-            _grid[i] = new char[cols];
-            for (var j = 0; j < cols; j++)
-            {
-                var value = input[i][j];
-                _grid[i][j] = value;
-
-                var coordinate = new Coordinate(i, j);
-                switch (value)
-                {
-                    case '.':
-                        _empty.Add(coordinate);
-                        break;
-                    case '#':
-                        _obstacles[i, j] = true;
-                        break;
-                    case '^':
-                        SetGuard(coordinate, Direction.Up);
-                        break;
-                    case '>':
-                        SetGuard(coordinate, Direction.Right);
-                        break;
-                    case 'V':
-                    case 'v':
-                        SetGuard(coordinate, Direction.Down);
-                        break;
-                    case '<':
-                        SetGuard(coordinate, Direction.Left);
-                        break;
-                    default:
-                        throw new ArgumentException("Unexpected character in input");
-                }
-            }
-        }
-
-        if (_guard == null)
-        {
-            throw new ArgumentException("Guard not found in input");
-        }
-    }
+    private readonly char[,] _grid;
+    private readonly HashSet<(int row, int col)> _visited = new();
+    private (int row, int col) _position;
 
     private enum Direction
     {
-        Up,
-        Right,
-        Down,
-        Left
+        North,
+        East,
+        South,
+        West
     }
 
-    public int Patrol()
+    private Direction _facing;
+
+    public GuardPatrol(string[] input)
     {
-        var next = GetNext();
-        while (next != null)
+        _grid = new char[input.Length, input[0].Length];
+
+        // Initialize grid and find starting position
+        for (var i = 0; i < input.Length; i++)
         {
-            if (_obstacles[next.X, next.Y] || next == _shenanigan)
+            for (var j = 0; j < input[i].Length; j++)
             {
-                SetGuard(_guard.Position, TurnRight(_guard.Orientation));
-            }
-            else
-            {
-                SetGuard(next, _guard.Orientation);
-            }
-
-            next = GetNext();
-        }
-
-        return _explored.Count;
-    }
-
-    public int FindLoopCreatingObstacleOptions()
-    {
-        var sum = 0;
-        var next = GetNext();
-        while (next != null)
-        {
-            if (_obstacles[next.X, next.Y])
-            {
-                SetGuard(_guard.Position, TurnRight(_guard.Orientation));
-            }
-            else
-            {
-                // explore with shenanigan
-                var guard = _guard;
-                _shenanigan = next;
-                SetGuard(_guard.Position, TurnRight(_guard.Orientation));
-                if (HasLoop())
+                _grid[i, j] = input[i][j];
+                if (IsGuard(input[i][j]))
                 {
-                    sum++;
-                    // Console.WriteLine($"Loop found. Total: {++sum}");
-                }
-                
-                // explore without shenanigan
-                _guard = guard;
-                _shenanigan = null;
-                SetGuard(next, _guard.Orientation);
-            }
-
-            next = GetNext();
-        }
-
-        return sum;
-    }
-
-    private bool HasLoop()
-    {
-        var encountered = new HashSet<Guard>();
-        var next = GetNext();
-        while (next != null)
-        {
-            // PrintGrid();
-            if (encountered.Contains(_guard))
-            {
-                return true;
-            }
-            
-            if (_obstacles[next.X, next.Y] || next == _shenanigan)
-            {
-                encountered.Add(_guard);
-                SetGuard(_guard.Position, TurnRight(_guard.Orientation));
-            }
-            else
-            {
-                SetGuard(next, _guard.Orientation);
-            }
-
-            next = GetNext();
-        }
-
-        return false;
-    }
-
-    private void PrintGrid()
-    {
-        Console.Clear();
-        for (var i = 0; i < _grid.Length; i++)
-        {
-            for (var j = 0; j < _grid[i].Length; j++)
-            {
-                var coordinate = new Coordinate(i, j);
-                if (_guard.Position.Equals(coordinate))
-                {
-                    Console.Write(_guard.Orientation switch
-                    {
-                        Direction.Up => '^',
-                        Direction.Right => '>',
-                        Direction.Down => 'v',
-                        Direction.Left => '<',
-                        _ => throw new InvalidOperationException("Invalid guard orientation")
-                    });
-                }
-                else if ((_obstacles[coordinate.X, coordinate.Y]))
-                {
-                    Console.Write('#');
-                }
-                else if (_explored.Contains(coordinate))
-                {
-                    Console.Write('X');
-                }
-                else if (coordinate == _shenanigan)
-                {
-                    Console.Write('O');
-                }
-                else
-                {
-                    Console.Write('.');
+                    _position = (i, j);
+                    _facing = GetInitialDirection(input[i][j]);
                 }
             }
-
-            Console.WriteLine();
         }
     }
 
-    private Coordinate? GetNext()
+    public int CountVisitedTiles()
     {
-        var next = _guard.Orientation switch
+        _visited.Add(_position);
+
+        while (true)
         {
-            Direction.Up => _guard.Position with { X = _guard.Position.X - 1 },
-            Direction.Right => _guard.Position with { Y = _guard.Position.Y + 1 },
-            Direction.Down => _guard.Position with { X = _guard.Position.X + 1 },
-            Direction.Left => _guard.Position with { Y = _guard.Position.Y - 1 },
-            _ => throw new InvalidOperationException("Invalid guard orientation")
+            var nextPos = GetNextPosition();
+            if (!IsValidPosition(nextPos))
+                break;
+
+            if (_grid[nextPos.row, nextPos.col] == '#')
+            {
+                // Hit wall, turn right
+                _facing = (Direction)(((int)_facing + 1) % 4);
+                continue;
+            }
+
+            // Move to next position
+            _position = nextPos;
+            _visited.Add(_position);
+        }
+
+        return _visited.Count;
+    }
+
+    public int CountPossibleLoopPositions()
+    {
+        var loopCount = 0;
+        var currentPos = _position;
+        var currentDir = _facing;
+
+        while (true)
+        {
+            var nextPos = GetNextPosition(currentPos, currentDir);
+            if (!IsValidPosition(nextPos))
+                break;
+
+            switch (_grid[nextPos.row, nextPos.col])
+            {
+                case '#':
+                    currentDir = (Direction)(((int)currentDir + 1) % 4);
+                    continue;
+                // Test for loop with obstacle at this position
+                case '.':
+                {
+                    var originalState = (currentPos, currentDir);
+                    if (CreatesLoopFromState(nextPos, originalState))
+                        loopCount++;
+                    break;
+                }
+            }
+
+            // Continue normal path
+            currentPos = nextPos;
+        }
+
+        return loopCount;
+    }
+
+    private bool CreatesLoopFromState((int row, int col) obstaclePos,
+        ((int row, int col) pos, Direction dir) startState)
+    {
+        var visited = new HashSet<((int row, int col) pos, Direction dir)> { startState };
+        var pos = startState.pos;
+        var dir = (Direction)(((int)startState.dir + 1) % 4); // First turn at obstacle
+
+        while (true)
+        {
+            var nextPos = GetNextPosition(pos, dir);
+            if (!IsValidPosition(nextPos))
+                return false;
+
+            if (_grid[nextPos.row, nextPos.col] == '#' || nextPos == obstaclePos)
+            {
+                var state = (pos, dir);
+                if (!visited.Add(state))
+                    return true;
+
+                dir = (Direction)(((int)dir + 1) % 4);
+                continue;
+            }
+
+            pos = nextPos;
+        }
+    }
+
+    private bool IsValidPosition((int row, int col) pos) =>
+        pos.row >= 0 && pos.row < _grid.GetLength(0) &&
+        pos.col >= 0 && pos.col < _grid.GetLength(1);
+
+
+    private (int row, int col) GetNextPosition() => GetNextPosition(_position, _facing);
+
+    private static bool IsGuard(char c) => c is '^' or '>' or 'v' or '<';
+
+    private static Direction GetInitialDirection(char c) => c switch
+    {
+        '^' => Direction.North,
+        '>' => Direction.East,
+        'v' => Direction.South,
+        '<' => Direction.West,
+        _ => throw new ArgumentException($"Invalid guard character: {c}")
+    };
+
+    private static (int row, int col) GetNextPosition((int row, int col) pos, Direction dir)
+    {
+        return dir switch
+        {
+            Direction.North => (pos.row - 1, pos.col),
+            Direction.East => (pos.row, pos.col + 1),
+            Direction.South => (pos.row + 1, pos.col),
+            Direction.West => (pos.row, pos.col - 1),
+            _ => throw new ArgumentException($"Invalid direction: {dir}")
         };
-
-        if (next.X < 0 || next.X >= _grid.Length || next.Y < 0 || next.Y >= _grid[0].Length)
-        {
-            return null;
-        }
-
-        return next;
     }
-
-    private static Direction TurnRight(Direction current) => (Direction)((int)(current + 1) % 4);
-
-    private void SetGuard(Coordinate position, Direction orientation)
-    {
-        _guard = new Guard(position, orientation);
-        _explored.Add(position);
-    }
-
-    private record Coordinate(int X, int Y);
-
-    private record Guard(Coordinate Position, Direction Orientation);
 }
