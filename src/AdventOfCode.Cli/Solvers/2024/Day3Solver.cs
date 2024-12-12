@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace AdventOfCode.Cli.Solvers;
+namespace AdventOfCode.Cli.Solvers._2024;
 
 public partial class Day3Solver : ISolver
 {

@@ -1,5 +1,6 @@
 using System.Numerics;
-using AdventOfCode.Cli.Solvers;
+
+namespace AdventOfCode.Cli.Solvers._2024;
 
 public class Day11Solver : ISolver
 {

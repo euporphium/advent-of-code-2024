@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace AdventOfCode.Cli;
+namespace AdventOfCode.Cli.Util;
 
 internal static class Performance
 {

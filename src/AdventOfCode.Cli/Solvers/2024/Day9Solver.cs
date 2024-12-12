@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace AdventOfCode.Cli.Solvers;
+namespace AdventOfCode.Cli.Solvers._2024;
 
 public class Day9Solver : ISolver
 {

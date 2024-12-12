@@ -1,4 +1,4 @@
-namespace AdventOfCode.Cli.Solvers;
+namespace AdventOfCode.Cli.Solvers._2024;
 
 // Included as an alternative solution for its clever use of backwards solving (division/subtraction)
 // and parallel processing optimizations.

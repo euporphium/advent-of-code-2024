@@ -1,4 +1,4 @@
-﻿namespace AdventOfCode.Cli.Solvers;
+﻿namespace AdventOfCode.Cli.Solvers._2024;
 
 public class Day2Solver : ISolver
 {
