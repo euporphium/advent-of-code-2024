@@ -9,3 +9,4 @@ riderModule.iml
 
 # Advent of Code
 data/**/actual.txt
+data/ouputs
