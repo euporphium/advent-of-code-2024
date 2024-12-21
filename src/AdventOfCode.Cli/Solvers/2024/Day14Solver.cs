@@ -46,12 +46,12 @@ public partial class Day14Solver : ISolver
             logs.Add(GetGridLog(robots, width, height));
 
             
-            if (i % 100 == 0)
-            {
-                var logFile = Path.Join("/Users/daniel/Development/source/AdventOfCode/data/outputs/2024/14",
-                    $"grid_{i}.txt");
-                File.WriteAllText(logFile, string.Join('\n', logs));
-            }
+            // if (i % 100 == 0)
+            // {
+            //     var logFile = Path.Join("/Users/daniel/Development/source/AdventOfCode/data/outputs/2024/14",
+            //         $"grid_{i}.txt");
+            //     File.WriteAllText(logFile, string.Join('\n', logs));
+            // }
             // PrintGrid(robots, width, height);
         }
 
@@ -130,7 +130,8 @@ public partial class Day14Solver : ISolver
             if (stdDevX < maxStdDev && stdDevY < maxStdDev)
             {
                 Console.WriteLine($"\nStep {steps}:");
-                PrintGrid(robots, width, height);
+                // uncomment to print the grid and manually confirm the tree (reporting ((correctly)) assumes first found is the correct one)
+                // PrintGrid(robots, width, height);
                 return steps.ToString();
             }
 
